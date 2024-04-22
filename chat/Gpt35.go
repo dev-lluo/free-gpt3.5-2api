@@ -4,35 +4,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"free-gpt3.5-2api/ProxyPool"
+	"free-gpt3.5-2api/RequestClient"
 	"free-gpt3.5-2api/common"
 	"free-gpt3.5-2api/config"
-	"free-gpt3.5-2api/requestclient"
 	browser "github.com/EDDYCJY/fake-useragent"
 	"github.com/aurorax-neo/go-logger"
 	fhttp "github.com/bogdanfinn/fhttp"
 	"github.com/bogdanfinn/tls-client/profiles"
 	"github.com/google/uuid"
 	"io"
-	"strings"
 )
 
 const BaseUrl = "https://chat.openai.com"
 const ApiUrl = BaseUrl + "/backend-anon/conversation"
 const SessionUrl = BaseUrl + "/backend-anon/sentinel/chat-requirements"
 
-// Language 随机生成语言
-var Language = common.RandomLanguage()
-
-// Ua 随机生成 User-Agent
-var Ua = browser.Random()
-
 type Gpt35 struct {
-	RequestClient requestclient.RequestClient
+	RequestClient RequestClient.RequestClient
 	MaxUseCount   int
 	ExpiresIn     int64
 	Session       *session
 	Ua            string
 	Language      string
+	IsUpdating    bool
 }
 
 type session struct {
@@ -58,20 +52,17 @@ func NewGpt35() *Gpt35 {
 		MaxUseCount: 1,
 		ExpiresIn:   common.GetTimestampSecond(config.AuthED),
 		Session:     &session{},
-		Ua:          Ua,
-		Language:    Language,
+		Ua:          browser.Firefox(),
+		Language:    common.RandomLanguage(),
+		IsUpdating:  false,
 	}
 	// 获取代理池
 	ProxyPoolInstance := ProxyPool.GetProxyPoolInstance()
 	// 如果代理池中有代理数大于 1 则使用 各自requestClient
 	if len(ProxyPoolInstance.Proxies) > 1 {
-		instance.RequestClient = requestclient.NewTlsClient(300, profiles.Okhttp4Android13)
-		instance.Ua = browser.Random()
-		instance.Language = common.RandomLanguage()
+		instance.RequestClient = RequestClient.NewTlsClient(300, profiles.Firefox_102)
 	} else {
-		instance.RequestClient = requestclient.GetInstance()
-		instance.Ua = Ua
-		instance.Language = Language
+		instance.RequestClient = RequestClient.GetInstance()
 	}
 	err := instance.RequestClient.SetProxy(ProxyPoolInstance.GetProxy().String())
 	if err != nil {
@@ -80,7 +71,11 @@ func NewGpt35() *Gpt35 {
 	// 获取新的 session
 	err = instance.getNewSession()
 	if err != nil {
-		return nil
+		return &Gpt35{
+			MaxUseCount: 0,
+			ExpiresIn:   0,
+			IsUpdating:  true,
+		}
 	}
 	return instance
 }
@@ -88,17 +83,13 @@ func NewGpt35() *Gpt35 {
 func (G *Gpt35) getNewSession() error {
 	// 生成新的设备 ID
 	G.Session.OaiDeviceId = uuid.New().String()
-	// 设置请求体
-	body := strings.NewReader(`{"conversation_mode_kind":"primary_assistant"}`)
 	// 创建请求
-	request, err := G.NewRequest("POST", SessionUrl, body)
+	request, err := G.NewRequest("POST", SessionUrl, nil)
 	if err != nil {
 		return err
 	}
 	// 设置请求头
 	request.Header.Set("oai-device-id", G.Session.OaiDeviceId)
-	request.Header.Set("accept-language", G.Language)
-	request.Header.Set("oai-language", G.Language)
 	// 发送 POST 请求
 	response, err := G.RequestClient.Do(request)
 	if err != nil {
@@ -134,8 +125,8 @@ func (G *Gpt35) NewRequest(method, url string, body io.Reader) (*fhttp.Request, 
 	request.Header.Set("sec-fetch-dest", "empty")
 	request.Header.Set("sec-fetch-mode", "cors")
 	request.Header.Set("sec-fetch-site", "same-origin")
+	request.Header.Set("oai-language", "en-US")
 	request.Header.Set("accept-language", G.Language)
-	request.Header.Set("oai-language", G.Language)
 	request.Header.Set("User-Agent", G.Ua)
 	return request, nil
 }
