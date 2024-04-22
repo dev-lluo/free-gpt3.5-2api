@@ -1,0 +1,233 @@
+###
+
+# curl --location --request POST 'http://127.0.0.1:9846/v1/chat/completions'
+#--header 'Authorization: Bearer abc'
+#--header 'Content-Type: application/json'
+#--data-raw '{
+#    "model": "gpt-3.5-turbo",
+#    "messages": [
+#        {
+#            "role": "user",
+#            "content": "西红柿炒钢丝球怎么做?"
+#        }
+#    ],
+#    "stream": false
+#}'
+POST http://127.0.0.1:8080/v1/chat/completions
+Authorization: Bearer gpt35fakeapi0421
+Content-Type: application/json
+
+{
+  "model": "gpt-3.5-turbo",
+  "stream": true,
+  "frequency_penalty": 0,
+  "presence_penalty": 0,
+  "temperature": 0.6,
+  "top_p": 1,
+  "messages": [
+    {
+      "content": "你是一名擅长会话的助理，你需要将用户的会话总结为 10 个字以内的标题",
+      "role": "system"
+    },
+    {
+      "content": "user: 你好\nassistant: ...\n\n请总结上述对话为10个字以内的标题，不需要包含标点符号，输出语言语种为：zh-CN",
+      "role": "user"
+    }
+  ]
+}
+
+###
+POST https://chat.chi.cat/v1/chat/completions
+Authorization: Bearer gpt35fakeapi0421pm1105
+Content-Type: application/json
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+Accept-Charset: utf-8
+
+{
+  "model": "gpt-3.5-turbo",
+  "messages": [
+    {
+      "role": "user",
+      "content": "你是谁?"
+    }
+  ],
+  "stream": true
+}
+
+
+###
+POST http://127.0.0.1:8080/v1/chat/completions
+DNT: 1
+x-stainless-lang: js
+sec-ch-ua-mobile: ?0
+authorization: Bearer 1222343244343
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0
+x-stainless-package-version: 4.38.2
+content-type: application/json
+accept: */*
+x-stainless-runtime: browser:chrome
+x-stainless-arch: unknown
+x-stainless-runtime-version: 124.0.0
+sec-ch-ua-platform: Windows
+
+{
+  "model": "gpt-3.5-turbo",
+  "stream": true,
+  "frequency_penalty": 0,
+  "presence_penalty": 0,
+  "temperature": 0.6,
+  "top_p": 1,
+  "messages": [
+    {
+      "content": "你好",
+      "role": "user"
+    }
+  ]
+}
+
+
+###
+POST test
+Content-Type: application/json
+
+{
+  "model": "gpt-3.5-turbo",
+  "stream": true,
+  "frequency_penalty": 0,
+  "presence_penalty": 0,
+  "temperature": 0.6,
+  "top_p": 1,
+  "messages": [
+    {
+      "content": "## Tools\n\nYou can use these tools below:\n\n### Calendar Assistant\n\nA plugin to manage your calendar events\n\nThe APIs you can use:\n\n#### calendar-assistant____manageEvents\n\n管理用户的日程事件，包括添加、查询、更新和删除，并给出日历地址；建议搭配日程助手一起使用\n\n### Realtime Weather\n\nGet realtime weather information\n\nThe APIs you can use:\n\n#### realtime-weather____fetchCurrentWeather\n\n获取当前天气情况",
+      "role": "system"
+    },
+    {
+      "content": "帮我最近找一天天气好的时候去户外徒步",
+      "role": "user"
+    },
+    {
+      "content": "当然，我可以帮你查找最近几天天气情况，然后推荐一个适合户外徒步的日子。请问你在哪个城市或地区？",
+      "role": "assistant"
+    },
+    {
+      "content": "上海",
+      "role": "user"
+    }
+  ],
+  "tools": [
+    {
+      "function": {
+        "description": "管理用户的日程事件，包括添加、查询、更新和删除，并给出日历地址；建议搭配日程助手一起使用",
+        "name": "calendar-assistant____manageEvents",
+        "parameters": {
+          "properties": {
+            "action": {
+              "description": "要执行的操作, 如添加:add, 查询:list, 删除:delete",
+              "enum": [
+                "add",
+                "list",
+                "delete"
+              ],
+              "type": "string"
+            },
+            "startDateTime": {
+              "description": "用户给出的日程开始日期和时间; 在执行'add'或'list'时,需询问用户获取; 使用格式为{'YYYY-MM-DDTHH:mm:ss.SSS+08:00' }",
+              "type": "string"
+            },
+            "endDateTime": {
+              "description": "用户给出的日程结束日期和时间; 在执行'add'或'list'时,需询问用户获取; 用格式为{'YYYY-MM-DDTHH:mm:ss.SSS+08:00' }",
+              "type": "string"
+            },
+            "eventDetails": {
+              "description": "根据用户给出的信息总结出日程详细信息",
+              "type": "string"
+            },
+            "eventSummary": {
+              "description": "用户给出的日程的标题, 当用户没有指定时,询问用户",
+              "type": "string"
+            },
+            "eventId": {
+              "description": "日程的ID, 用于对'指定的日程'进行更新或删除; 当执行'delete'时, 如果上下文中没有'eventiD', 通过用户给出eventDetails查询得到",
+              "type": "string"
+            }
+          },
+          "required": [
+            "action"
+          ],
+          "type": "object",
+          "description": "执行'add'或'list'时，要同时带上'startDateTime','endDateTime', 'eventSummary', eventDetails'; 执行'delete'的时候, 要带上'eventId '"
+        }
+      },
+      "type": "function"
+    },
+    {
+      "function": {
+        "description": "获取当前天气情况",
+        "name": "realtime-weather____fetchCurrentWeather",
+        "parameters": {
+          "properties": {
+            "city": {
+              "description": "城市名称",
+              "type": "string"
+            }
+          },
+          "required": [
+            "city"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "function"
+    }
+  ]
+}
+
+
+
+###
+POST test
+Content-Type: application/json
+
+{
+  "message": {
+    "id": "f8b612b1-c161-45f9-b317-b2bdcf7fd35c",
+    "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+    },
+    "create_time": 1713716122.943865,
+    "update_time": null,
+    "content": {
+      "content_type": "code",
+      "language": "json",
+      "text": ""
+    },
+    "status": "in_progress",
+    "end_turn": null,
+    "weight": 1.0,
+    "metadata": {
+      "citations": [],
+      "gizmo_id": null,
+      "message_type": "next",
+      "model_slug": "text-davinci-002-render-sha",
+      "default_model_slug": "text-davinci-002-render-sha",
+      "parent_id": "8237cb3f-c54f-4829-8f07-8a70bfb1ab25",
+      "model_switcher_deny": [{
+        "slug": "text-davinci-002-render-sha",
+        "context": "regenerate",
+        "reason": "unsupported_tool_use",
+        "description": "This conversation contains an unsupported tool."
+      }, {
+        "slug": "text-davinci-002-render-sha",
+        "context": "conversation",
+        "reason": "unsupported_tool_use",
+        "description": "This conversation contains an unsupported tool."
+      }]
+    },
+    "recipient": "realtime-weather____fetchCurrentWeather"
+  },
+  "conversation_id": "3fbccf46-04e5-4426-a225-01dce9f57168",
+  "error": null
+}
